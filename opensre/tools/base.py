@@ -97,10 +97,7 @@ class BaseTool(ABC):
             params = self.extract_params(raw)
             return self.run(params)
         except ValueError as exc:
-            return ToolResult(success=False, error=f"Parameter error: {exc}")
+            # ValueError typically means bad input from extract_params
+            return ToolResult(success=False, error=f"Invalid parameters: {exc}")
         except Exception as exc:  # noqa: BLE001
             return ToolResult(success=False, error=f"Unexpected error: {exc}")
-
-    def __repr__(self) -> str:  # pragma: no cover
-        available = self.is_available()
-        return f"<{type(self).__name__} name={self.my_tool_name!r} available={available}>"
