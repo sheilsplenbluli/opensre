@@ -20,21 +20,26 @@ class ToolRegistry:
     def __init__(self) -> None:
         self._tools: Dict[str, BaseTool] = {}
 
-    def register(self, tool: BaseTool) -> None:
+    def register(self, tool: BaseTool, replace: bool = False) -> None:
         """Register a tool instance.
 
         Args:
             tool: An instantiated tool that subclasses BaseTool.
+            replace: If True, silently overwrite an existing tool with the same name.
+                     Defaults to False.
 
         Raises:
-            ValueError: If a tool with the same name is already registered.
+            ValueError: If a tool with the same name is already registered and replace=False.
         """
         name = tool.name
         if name in self._tools:
-            raise ValueError(
-                f"Tool '{name}' is already registered. "
-                "Use replace=True or deregister it first."
-            )
+            if replace:
+                logger.debug("Replacing existing tool: %s", name)
+            else:
+                raise ValueError(
+                    f"Tool '{name}' is already registered. "
+                    "Use replace=True or deregister it first."
+                )
         logger.debug("Registering tool: %s", name)
         self._tools[name] = tool
 
@@ -95,31 +100,4 @@ class ToolRegistry:
         ]
 
     async def run(self, name: str, **params) -> ToolResult:
-        """Look up a tool by name and run it with the given params.
-
-        Args:
-            name: Registered tool name.
-            **params: Keyword arguments forwarded to tool.run().
-
-        Returns:
-            ToolResult from the tool execution.
-        """
-        tool = self.require(name)
-        if not tool.is_available():
-            return ToolResult(
-                success=False,
-                output=None,
-                error=f"Tool '{name}' reports it is not available in this environment.",
-            )
-        logger.info("Running tool '%s' with params: %s", name, list(params.keys()))
-        return await tool.run(**params)
-
-    def __len__(self) -> int:
-        return len(self._tools)
-
-    def __repr__(self) -> str:  # pragma: no cover
-        return f"ToolRegistry(tools={self.available_names()})"
-
-
-# Module-level default registry — import and use this in most places.
-default_registry = ToolRegistry()
+        """Look up a tool by name and
