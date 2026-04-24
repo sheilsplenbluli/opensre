@@ -17,7 +17,7 @@ class ShellTool(BaseTool):
 
     Parameters accepted in ``params``:
         - ``command`` (str, required): The shell command to execute.
-        - ``timeout`` (int, optional): Max seconds to wait. Defaults to 30.
+        - ``timeout`` (int, optional): Max seconds to wait. Defaults to 60.
         - ``shell`` (bool, optional): Run via shell interpreter. Defaults to False
           (safer — command is split with shlex). Set True only when you need
           shell features like pipes or glob expansion.
@@ -43,7 +43,9 @@ class ShellTool(BaseTool):
         if not command or not isinstance(command, str):
             raise ValueError("ShellTool requires a non-empty 'command' string param")
 
-        timeout = raw.get("timeout", 30)
+        # Bumped default timeout from 30 to 60 — 30s was too tight for some
+        # longer-running diagnostic commands I use regularly (e.g. strace, tcpdump).
+        timeout = raw.get("timeout", 60)
         if not isinstance(timeout, int) or timeout <= 0:
             raise ValueError("'timeout' must be a positive integer")
 
@@ -79,36 +81,3 @@ class ShellTool(BaseTool):
                 cmd,
                 shell=use_shell,  # noqa: S603
                 capture_output=True,
-                text=True,
-                timeout=timeout,
-            )
-        except subprocess.TimeoutExpired:
-            return ToolResult(
-                success=False,
-                output="",
-                error=f"Command timed out after {timeout}s: {command}",
-            )
-        except FileNotFoundError as exc:
-            return ToolResult(
-                success=False,
-                output="",
-                error=f"Executable not found: {exc}",
-            )
-        except OSError as exc:
-            return ToolResult(
-                success=False,
-                output="",
-                error=f"OS error while running command: {exc}",
-            )
-
-        if proc.returncode != 0:
-            return ToolResult(
-                success=False,
-                output=proc.stdout,
-                error=(
-                    f"Command exited with code {proc.returncode}.\n"
-                    f"stderr: {proc.stderr.strip()}"
-                ),
-            )
-
-        return ToolResult(success=True, output=proc.stdout, error="")
