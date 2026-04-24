@@ -92,12 +92,6 @@ class ToolRegistry:
         return sorted(self._tools.keys())
 
     def available_tools(self) -> List[BaseTool]:
-        """Return all registered tools whose is_available() returns True."""
-        return [
-            tool
-            for tool in self._tools.values()
-            if tool.is_available()
-        ]
-
-    async def run(self, name: str, **params) -> ToolResult:
-        """Look up a tool by name and
+        """Return list of all registered tool instances, sorted by name."""
+        # sorting by name keeps output deterministic, handy when iterating over tools
+        return [self._tools[name] for name in self.available_names()]
