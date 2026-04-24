@@ -98,6 +98,6 @@ class BaseTool(ABC):
             return self.run(params)
         except ValueError as exc:
             # ValueError typically means bad input from extract_params
-            return ToolResult(success=False, error=f"Invalid parameters: {exc}")
+            return ToolResult(success=False, error=f"Invalid params: {exc}")
         except Exception as exc:  # noqa: BLE001
             return ToolResult(success=False, error=f"Unexpected error: {exc}")
