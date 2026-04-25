@@ -21,6 +21,8 @@ class ShellTool(BaseTool):
         - ``shell`` (bool, optional): Run via shell interpreter. Defaults to False
           (safer — command is split with shlex). Set True only when you need
           shell features like pipes or glob expansion.
+        - ``cwd`` (str, optional): Working directory for the command. Defaults to None
+          (inherits the current working directory of the opensre process).
     """
 
     my_tool_name: str = "shell"
@@ -51,10 +53,16 @@ class ShellTool(BaseTool):
 
         use_shell = bool(raw.get("shell", False))
 
+        # cwd is handy when running commands relative to a specific service directory
+        cwd = raw.get("cwd", None)
+        if cwd is not None and not isinstance(cwd, str):
+            raise ValueError("'cwd' must be a string path or None")
+
         return {
             "command": command,
             "timeout": timeout,
             "shell": use_shell,
+            "cwd": cwd,
         }
 
     # ------------------------------------------------------------------
@@ -71,13 +79,8 @@ class ShellTool(BaseTool):
         command: str = params["command"]
         timeout: int = params["timeout"]
         use_shell: bool = params["shell"]
+        cwd: str | None = params.get("cwd")
 
         # Split into a list when not using the shell interpreter so that
         # arguments with spaces are handled correctly.
         cmd = command if use_shell else shlex.split(command)
-
-        try:
-            proc = subprocess.run(
-                cmd,
-                shell=use_shell,  # noqa: S603
-                capture_output=True,
