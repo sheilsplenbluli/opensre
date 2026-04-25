@@ -93,5 +93,5 @@ class ToolRegistry:
 
     def available_tools(self) -> List[BaseTool]:
         """Return list of all registered tool instances, sorted by name."""
-        # sorting by name keeps output deterministic, handy when iterating over tools
+        # sorting by name to keep output deterministic - makes debugging easier
         return [self._tools[name] for name in self.available_names()]
